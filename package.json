@@ -1,0 +1,16 @@
+{
+  "name": "@geode/trio",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "trio": "./bin/trio.ts"
+  },
+  "scripts": {
+    "test": "bun test test/",
+    "check": "bunx tsc --noEmit",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.26.0"
+  }
+}
