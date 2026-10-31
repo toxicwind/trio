@@ -79,10 +79,12 @@ export function extractDeps(source: string): string[] {
 		const l = normLine(raw);
 		const stat = l.match(/(?:^|\})\s*(?:import\s+[^"']*?\s*from\s*|import\s*|require\s*\(\s*|import\s*\(\s*)["']([^"']+)["']/);
 		if (stat) deps.add(stat[1]);
-		else {
-			const dyn = l.match(/import\s*\(\s*["']([^"']+)["']\s*\)/);
-			if (dyn) deps.add(dyn[1]);
-		}
+		// require("x") may appear mid-line (const z = require("lodash")) —
+		// match the bare require call anywhere, not just at statement start.
+		const req = l.match(/\brequire\s*\(\s*["']([^"']+)["']\s*\)/);
+		if (req) deps.add(req[1]);
+		const dyn = l.match(/import\s*\(\s*["']([^"']+)["']\s*\)/);
+		if (dyn) deps.add(dyn[1]);
 	}
 	return [...deps];
 }
