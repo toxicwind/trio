@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-31T03:32:43.272Z",
+  "rows": [
+    {
+      "tool": "rc_compare",
+      "bestMs": 0.15,
+      "bestOf": 3
+    },
+    {
+      "tool": "rc_deps",
+      "bestMs": 0.2,
+      "bestOf": 3
+    },
+    {
+      "tool": "rc_short_grep",
+      "bestMs": 1.74,
+      "bestOf": 3
+    },
+    {
+      "tool": "rc_tree_compare",
+      "bestMs": 6.42,
+      "bestOf": 3
+    }
+  ]
+}

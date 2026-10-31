@@ -121,7 +121,11 @@ server.tool(
 // ─── rc_gh_compare: clone + tree-compare (scale-guarded) ───────────────
 function runCli(cmd: string, args: string[], cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const c = spawn(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"] })
+    // GIT_TERMINAL_PROMPT=0: public clones must never block/prompt on a
+    // broken or missing credential helper (gh token invalid, stdin closed).
+    // Anonymous access falls through for public repos; private repos error
+    // cleanly via the captured stderr instead of hanging.
+    const c = spawn(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, GIT_TERMINAL_PROMPT: "0" } })
     let out = "", err = ""
     c.stdout.on("data", d => out += d)
     c.stderr.on("data", d => err += d)

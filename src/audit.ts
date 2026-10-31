@@ -142,8 +142,6 @@ export async function searchRoutes(dir: string, mode: string, limit = 25): Promi
 			const isRouteDecl = /routes::|\.route\(|match\s+\w+\.path|path\s*\(\.\.\)|handler/.test(line) && lineHasNeedle;
 			if (isDispatch || isRouteDecl) {
 				hits.push({ file, line: i + 1, snippet: line.trim().slice(0, 200), source: "route", score: isDispatch ? 1.0 : 0.8 });
-			} else if (/(?:elif|if|case|match)\s+/.test(line)) {
-				hits.push({ file, line: i + 1, snippet: line.trim().slice(0, 200), source: "route", score: 0.7 });
 			}
 		}
 	});

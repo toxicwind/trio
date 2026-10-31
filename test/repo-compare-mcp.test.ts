@@ -1,9 +1,15 @@
 import { describe, test, expect } from "bun:test";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { compare, compareTrees, extractDeps, semanticRatio } from "../src/compare.ts";
-import { spawn } from "node:child_process";
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
+
+const TRIO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // ── fixtures ─────────────────────────────────────────────────────────────
 const CANON = `import { chat } from '@tanstack/ai'
@@ -56,7 +62,7 @@ describe("rc_compare variant report contract", () => {
   });
 
   test("semanticRatio partial line overlap", () => {
-    expect(semanticRatio << 0).toBeLessThan(2); // number, not NaN
+    expect(typeof semanticRatio).toBe("function");
   });
 });
 
@@ -91,46 +97,68 @@ describe("rc_tree_compare rollup contract", () => {
 
 // ── 3. server integration (spawn real server) ────────────────────────────
 describe("repo-compare MCP server", () => {
-  test("boots and lists the four rc_* tools", async () => {
-    const port = 26299;
-    const child = spawn("bun", ["mcp/server.ts"], {
-      cwd: new URL("..", import.meta.url).pathname,
-      env: { ...process.env, REPO_COMPARE_PORT: String(port) },
+  async function connect() {
+    const client = new Client({ name: "trio-test", version: "0.0.0" });
+    const transport = new StdioClientTransport({
+      command: "bun",
+      args: ["mcp/server.ts"],
+      cwd: TRIO_ROOT,
+      env: { ...process.env, REPO_COMPARE_PORT: "" },
     });
+    await client.connect(transport);
+    return { client, transport };
+  }
+
+  test("boots and lists the four rc_* tools", async () => {
+    const { client, transport } = await connect();
     try {
-      const base = `http://127.0.0.1:${port}/mcp`;
-      let up = false;
-      for (let i = 0; i < 40; i++) {
-        try { await fetch(`http://127.0.0.1:${port}/health`); up = true; break; }
-        catch { await Bun.sleep(150); }
+      const names = (await client.listTools()).tools.map((t) => t.name);
+      for (const want of ["rc_compare", "rc_tree_compare", "rc_deps", "rc_short_grep", "read_trio_audit", "trio_route"]) {
+        expect(names).toContain(want);
       }
-      expect(up).toBe(true);
-      const list = await (await fetch(base, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }) })).json();
-      const names = (list?.result?.tools ?? []).map((t: { name: string }) => t.name);
-      expect(names).toContain("rc_compare");
-      expect(names).toContain("rc_tree_compare");
-      expect(names).toContain("rc_deps");
-      expect(names).toContain("rc_short_grep");
     } finally {
-      child.kill();
+      await client.close();
+      await transport.close();
     }
   });
 
   test("rc_short_grep returns line numbers + literal/regex modes", async () => {
-    const port = 26300;
-    const child = spawn("bun", ["mcp/server.ts"], { cwd: new URL("..", import.meta.url).pathname, env: { ...process.env, REPO_COMPARE_PORT: String(port) } });
+    const { client, transport } = await connect();
     try {
-      const base = `http://127.0.0.1:${port}/mcp`;
-      for (let i = 0; i < 40; i++) { try { await fetch(`http://127.0.0.1:${port}/health`); break; } catch { await Bun.sleep(150); } }
-      const call = async (name: string, arguments_: any) => {
-        const r = await fetch(base, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: { name, arguments: arguments_ } }) });
-        return (await r.json()).result.content[0].text;
+      const call = async (name: string, arguments_: Record<string, unknown>) => {
+        const r = (await client.callTool({ name, arguments: arguments_ })) as { content?: { type: string; text?: string }[] };
+        return r?.content?.[0]?.text ?? "";
       };
       const lit = JSON.parse(await call("rc_short_grep", { source: "alpha\nbeta line\ngamma\nbeta2", needle: "beta" }));
       expect(lit.count).toBe(2);
       expect(lit.hits[0].line).toBe(2);
       const re = JSON.parse(await call("rc_short_grep", { source: "a1\nx2\na3", needle: "^a", regex: true }));
       expect(re.count).toBe(2);
-    } finally { child.kill(); }
+    } finally {
+      await client.close();
+      await transport.close();
+    }
+  });
+
+  // Live-github test, guarded by the box's GH credential health: the whole
+  // estate's tokens (gh hosts.yml + secretsmith keyring) were invalid on
+  // 2026-10-31 (gh auth status rc!=0) and anonymous git cloning is
+  // intermittently 401'd by GitHub — no product code can fix a revoked
+  // account token. When creds are healthy this runs for real.
+  const ghHealthy = spawnSync("gh", ["auth", "status"], { encoding: "utf8", timeout: 15000 }).status === 0;
+  test.skipIf(!ghHealthy)("rc_gh_compare clones two real repos and returns a rollup", async () => {
+    const { client, transport } = await connect();
+    try {
+      const r = (await client.callTool({ name: "rc_gh_compare", arguments: { repoA: "toxicwind/trio", repoB: "toxicwind/coreelec-mcp", maxFiles: 600 } })) as {
+        content?: { type: string; text?: string }[];
+      };
+      const text = r?.content?.[0]?.text ?? "";
+      const data = JSON.parse(text);
+      expect(data.report).toBeDefined();
+      expect(data.ms).toBeGreaterThan(0);
+    } finally {
+      await client.close();
+      await transport.close();
+    }
   });
 });
