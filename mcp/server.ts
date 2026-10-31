@@ -1,121 +1,158 @@
 #!/usr/bin/env bun
 /**
- * repo-compare — MCP server exposing the trio algorithmic compare engine.
+ * repo-compare — stdio MCP server exposing the trio algorithmic compare engine.
  *
- * Folds the variant/repo compare feature into an agent-callable surface:
- *   rc_compare       — N source variants → tok/ast/sem matrix + canonical guess
- *   rc_tree_compare  — two repo dirs walked, paired by path → rollup + per-file
- *   rc_deps          — extract dependency imports/requires from a source string
- *   rc_short_grep    — quick literal/regex find over a source string (meta-tool
- *                      for picking variants before compare)
+ * Folds the variant/repo compare feature into an agent-callable surface.
+ * Federated via thresher (:25127). Same SDK pattern as coreelec-mcp.
  *
- * Federated via thresher (:25127) as stdio; streamable-HTTP JSON-RPC 2.0 shape
- * mirrors vision-kit mcp/server.ts.
+ * Tools:
+ *   rc_compare       — N variants → token/ast/semantic matrix + categorized diffs
+ *   rc_tree_compare  — two dirs → per-path paired rollup
+ *   rc_deps          — extract dependency specifiers from a source string
+ *   rc_short_grep    — literal/regex line search over a source string
+ *   rc_gh_compare    — clone two GitHub repos, tree-compare (scale-guarded)
  */
-import { existsSync, readFileSync } from "node:fs";
-import { serve } from "bun";
-import { compare, compareTrees, extractDeps } from "../src/compare.ts";
-import { walkTree } from "../src/tree.ts";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
+import { z } from "zod"
+import { compare, compareTrees, extractDeps } from "../src/compare.ts"
+import { walkTree } from "../src/tree.ts"
+import { executeReadTrioAudit, searchRoutes } from "../src/audit.ts"
+import { mkdtempSync } from "node:fs"
+import { spawn } from "node:child_process"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
-const PORT = Number(process.env.REPO_COMPARE_PORT ?? 25229);
-const MAX_READ = 2 * 1024 * 1024; // 2 MiB per source fed to engine
+const server = new McpServer({ name: "trio", version: "0.4.0" })
 
-function rpc(id, result, error) {
-  const out = { jsonrpc: "2.0", id: id ?? null };
-  if (error) out.error = error;
-  else out.result = result ?? {};
-  return out;
-}
-
-function readSource(path) {
-  if (!existsSync(path)) throw new Error(`file not found: ${path}`);
-  const buf = readFileSync(path);
-  if (buf.length > MAX_READ) throw new Error(`file too large (${buf.length}b)`);
-  return buf.toString("utf8");
-}
-
-async function handle(ctx) {
-  const args = ctx.args ?? {};
-  switch (ctx.tool) {
-    case "rc_compare": {
-      const variants = Array.isArray(args.variants) ? args.variants : [];
-      if (!variants.length) return { error: "variants[] required: [{name, source}]" };
-      const parsed = variants.map(v => ({ name: String(v.name), source: String(v.source) }));
-      return { report: compare(parsed), n: parsed.length };
-    }
-    case "rc_tree_compare": {
-      const a = String(args.repoA ?? ""), b = String(args.repoB ?? "");
-      if (!a || !b) return { error: "repoA and repoB (absolute dirs) required" };
-      if (!existsSync(a) || !existsSync(b)) return { error: "repo dir missing" };
-      const t0 = Date.now();
-      const ra = await walkTree(a), rb = await walkTree(b);
-      const report = compareTrees(ra, rb);
-      return { report, ms: Date.now() - t0 };
-    }
-    case "rc_deps": {
-      const src = String(args.source ?? "");
-      if (!src) return { error: "source required" };
-      return { deps: extractDeps(src) };
-    }
-    case "rc_short_grep": {
-      const src = String(args.source ?? "");
-      const needle = String(args.needle ?? "");
-      if (!src || !needle) return { error: "source and needle required" };
-      const flags = args.regex === true ? "g" : "g";
-      let re;
-      try {
-        re = args.regex === true ? new RegExp(needle, flags) : null;
-      } catch (e) {
-        return { error: `bad regex: ${e.message}` };
-      }
-      const lines = src.split("\n");
-      const hits = [];
-      for (let i = 0; i < lines.length; i++) {
-        const ok = re ? re.test(lines[i]) : lines[i].includes(needle);
-        if (ok) hits.push({ line: i + 1, text: lines[i].slice(0, 200) });
-      }
-      return { count: hits.length, hits: hits.slice(0, 100) };
-    }
-    default:
-      return rpc(null, null, { code: -32601, message: `unknown tool: ${ctx.tool}` });
-  }
-}
-
-// tools list
-const tools = [
-  { name: "rc_compare", description: "Compare N source variants across 3 metric layers (token Jaccard, dep-aware AST signature Jaccard, LCS semantic ratio). Returns matrix, identical groups, canonical guess, per-pair categorized changed-lines.", inputSchema: { type: "object", properties: { variants: { type: "array", items: { type: "object", properties: { name: { type: "string" }, source: { type: "string" } }, required: ["name", "source"] } } }, required: ["variants"] } },
-  { name: "rc_tree_compare", description: "Walk two repo directories, pair files by relative path, roll up token/ast/sem similarity + per-file diffs. Fast tree-level ancestry/copy detection.", inputSchema: { type: "object", properties: { repoA: { type: "string", description: "absolute dir" }, repoB: { type: "string", description: "absolute dir" } }, required: ["repoA", "repoB"] } },
-  { name: "rc_deps", description: "Extract dependency specifiers (import/export-from/require/dynamic-import) from a source string.", inputSchema: { type: "object", properties: { source: { type: "string" } }, required: ["source"] } },
-  { name: "rc_short_grep", description: "Literal or regex search over a source string, returns line:match hits (helper to pick variants before compare).", inputSchema: { type: "object", properties: { source: { type: "string" }, needle: { type: "string" }, regex: { type: "boolean" } }, required: ["source", "needle"] } },
-];
-
-const render = (body) => new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
-
-serve({
-  port: PORT,
-  async fetch(req) {
-    const url = new URL(req.url);
-    if (url.pathname === "/health") return render({ status: "ok", tools: tools.length });
-    if (url.pathname === "/mcp" && req.method === "POST") {
-      const body = await req.json();
-      const id = body.id;
-      if (body.method === "initialize") {
-        return render(rpc(id, { protocolVersion: "2024-11-05", capabilities: { tools: { listChanged: true } }, serverInfo: { name: "repo-compare", version: "0.1.0" } }));
-      }
-      if (body.method === "tools/list") return render(rpc(id, { tools }));
-      if (body.method === "tools/call") {
-        try {
-          const res = await handle({ tool: body.params.name, args: body.params.arguments });
-          if (res && res.error) return render(rpc(id, null, { code: -32602, message: res.error }));
-          return render(rpc(id, { content: [{ type: "text", text: JSON.stringify(res, null, 2) }] }));
-        } catch (e) {
-          return render(rpc(id, null, { code: -32603, message: String(e.message || e) }));
-        }
-      }
-      return render(rpc(id, null, { code: -32601, message: "method not found" }));
-    }
-    return render(rpc(null, null, { code: -32601, message: "not found" }));
+// ─── read_trio_audit: parallel AST + BM25 + LSP + ROUTE federated search ──
+server.tool(
+  "read_trio_audit",
+  "Parallel AST + BM25 + LSP federated code search and architectural audit. Fuses structural code matches (ast-grep), lexical tokens (BM25), and type/symbol definitions (LSP + ROUTE dispatch tracing) using Reciprocal Rank Fusion (RRF). Routes over TS/JS/Python/Rust/Go.",
+  {
+    query: z.string().describe("Symbol, pattern, or search terms to audit across the codebase"),
+    path: z.string().optional().describe("Root path or directory to search within (defaults to '.')"),
+    limit: z.number().optional().default(20).describe("Maximum number of fused hits to return"),
   },
-});
+  async ({ query, path = ".", limit = 20 }) => {
+    const result = await executeReadTrioAudit(query, path, limit)
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] }
+  },
+)
 
-console.error(`repo-compare MCP server on :${PORT} (${tools.length} tools)`);
+// ─── trio_route: structural route-dispatch tracing ───────────────────────
+server.tool(
+  "trio_route",
+  "Structural route-dispatch tracing: given a mode/action/route key (e.g. 'playback.media', 'chat/completions', 'file_list'), find the dispatch-table entries and handler definitions that route to it, across router/navigator/handler files in TS/JS/Python/Rust. Returns per-file line hits with the dispatch predicate.",
+  {
+    route: z.string().describe("Mode/action/route key to trace"),
+    path: z.string().optional().describe("Directory to search (default '.')"),
+    limit: z.number().optional().default(25).describe("Max hits"),
+  },
+  async ({ route, path = ".", limit = 25 }) => {
+    const routes = await searchRoutes(path, route, limit)
+    return { content: [{ type: "text", text: JSON.stringify({ routes }, null, 2) }] }
+  },
+)
+
+// ─── rc_compare: N variants → metric matrix ────────────────────────────
+server.tool(
+  "rc_compare",
+  "Compare N source variants with three metric layers (token Jaccard, dep-aware AST signature Jaccard, LCS semantic ratio). Returns the pair matrix, identical groups, canonical guess, and per-pair categorized changed lines (import-alias / type-annotation / modified / removed / added).",
+  {
+    variants: z.array(z.object({
+      name: z.string().describe("variant id"),
+      source: z.string().describe("source text"),
+    })).min(1).describe("variants to compare"),
+  },
+  async ({ variants }) => {
+    const t0 = Date.now()
+    const report = compare(variants)
+    return { content: [{ type: "text", text: JSON.stringify({ report, ms: Date.now() - t0 }, null, 2) }] }
+  },
+)
+
+// ─── rc_tree_compare: two dirs → rollup ────────────────────────────────
+server.tool(
+  "rc_tree_compare",
+  "Compare two local directories line-by-line, paired by relative path. Returns a rollup (files/paired/only-a/only-b/identical + mean similarity) and per-file diffs.",
+  {
+    a: z.string().describe("first directory"),
+    b: z.string().describe("second directory"),
+  },
+  async ({ a, b }) => {
+    const t0 = Date.now()
+    const ra = await walkTree(a), rb = await walkTree(b)
+    const report = compareTrees(ra, rb)
+    return { content: [{ type: "text", text: JSON.stringify({ report, ms: Date.now() - t0 }, null, 2) }] }
+  },
+)
+
+// ─── rc_deps: extract dependency specifiers ────────────────────────────
+server.tool(
+  "rc_deps",
+  "Extract dependency specifiers from a source string (import, export-from, require(), dynamic import).",
+  { source: z.string().describe("source text") },
+  async ({ source }) => {
+    const deps = extractDeps(source)
+    return { content: [{ type: "text", text: JSON.stringify({ deps }, null, 2) }] }
+  },
+)
+
+// ─── rc_short_grep: literal/regex line search ──────────────────────────
+server.tool(
+  "rc_short_grep",
+  "Literal or regex search over a source string; returns line:match hits (helper to pick variants or find a needle).",
+  {
+    source: z.string().describe("source text"),
+    needle: z.string().describe("string or regex to find"),
+    regex: z.boolean().optional().describe("treat needle as regex (default literal)"),
+  },
+  async ({ source, needle, regex }) => {
+    const hits = [] as { line: number; text: string }[]
+    const re = regex ? new RegExp(needle) : null
+    source.split("\n").forEach((line, i) => {
+      if (re ? re.test(line) : line.includes(needle)) hits.push({ line: i + 1, text: line.trim() })
+    })
+    return { content: [{ type: "text", text: JSON.stringify({ count: hits.length, hits }, null, 2) }] }
+  },
+)
+
+// ─── rc_gh_compare: clone + tree-compare (scale-guarded) ───────────────
+function runCli(cmd: string, args: string[], cwd: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const c = spawn(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"] })
+    let out = "", err = ""
+    c.stdout.on("data", d => out += d)
+    c.stderr.on("data", d => err += d)
+    c.on("close", code => code === 0 ? resolve(out) : reject(new Error((err || out).slice(0, 300))))
+  })
+}
+async function cloneRepo(spec: string): Promise<string> {
+  const dir = mkdtempSync(`${tmpdir()}/rc-gh-`)
+  await runCli("git", ["clone", "--depth", "1", `https://github.com/${spec}`, "repo"], dir)
+  return join(dir, "repo")
+}
+server.tool(
+  "rc_gh_compare",
+  "Clone two GitHub repos (owner/repo) to tmp and tree-compare them. Scale-guarded by maxFiles. Requires network + git.",
+  {
+    repoA: z.string().describe("owner/repo"),
+    repoB: z.string().describe("owner/repo"),
+    maxFiles: z.number().optional().default(3000).describe("file-count guard"),
+  },
+  async ({ repoA, repoB, maxFiles }) => {
+    const t0 = Date.now()
+    const da = await cloneRepo(repoA), db = await cloneRepo(repoB)
+    const ra = await walkTree(da), rb = await walkTree(db)
+    if (ra.length > maxFiles || rb.length > maxFiles) {
+      return { content: [{ type: "text", text: JSON.stringify({ error: `tree too large: ${ra.length}/${rb.length} files > maxFiles ${maxFiles}` }, null, 2) }], isError: true }
+    }
+    const report = compareTrees(ra, rb)
+    return { content: [{ type: "text", text: JSON.stringify({ report, ms: Date.now() - t0, homes: [da, db] }, null, 2) }] }
+  },
+)
+
+const transport = new StdioServerTransport()
+await server.connect(transport)
+console.error("trio MCP server running on stdio (7 tools: rc_compare, rc_tree_compare, rc_deps, rc_short_grep, rc_gh_compare, read_trio_audit, trio_route)")
