@@ -1,22 +1,78 @@
-# trio
+<div align="center">
 
-Persistent **Bun notebook kernel** — the estate's standalone take on the most
-evolved eval system (tau's JS kernel) as a first-class geode product.
+<h1>💎 trio</h1>
 
-Run JS cells with persistent top-level state across calls, top-level `await`,
-rich error folding, and a plain stdio protocol — no Jupyter, no VS Code, no
-orphaned host bridge. A single Bun process holds the VM; cells append into it.
+<p><strong>Tri-Pillar Code Intelligence: Algorithmic Repo Compare, 4-Channel RRF Code Search, & Persistent Bun Notebook Kernel</strong></p>
 
-## Why
+[![repo](https://img.shields.io/badge/github-toxicwind%2Ftrio-181717.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/toxicwind/trio)
+[![tests](https://img.shields.io/badge/tests-45%20passed-brightgreen.svg?style=for-the-badge&logo=bun)](https://github.com/toxicwind/trio)
+[![runtime](https://img.shields.io/badge/runtime-bun%201.4.4-fbf0df.svg?style=for-the-badge&logo=bun&logoColor=black)](https://bun.sh)
+[![mcp](https://img.shields.io/badge/mcp-7%20tools-8A2BE2.svg?style=for-the-badge)](mcp/server.ts)
+[![license](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-tau and kappa grew separate eval systems. kappa's notebook path
-(`kappacode/notebook/*`, `notebook_execute`) is a request/reply bridge gated
-to `KAPPA_CLIENT === "vscode"` — orphaned for terminal agents. tau's JS eval
-kernels (`packages/coding-agent/src/eval/js/*`) are the most evolved: persistent
-VM, prelude, tool bridge, package install, speculation. **trio** productizes
-that kernel as a named geode product anyone can run.
+</div>
 
-## Usage
+---
+
+**trio** unifies three critical operational capabilities into a single, high-performance engine for AI agents and engineering workflows:
+
+```
+                             ┌──────────────────────────────────┐
+                             │          trio Engine             │
+                             └─────────────────┬────────────────┘
+                                               │
+             ┌─────────────────────────────────┼─────────────────────────────────┐
+             ▼                                 ▼                                 ▼
+  ┌─────────────────────┐           ┌─────────────────────┐           ┌─────────────────────┐
+  │   1. Repo Compare   │           │ 2. Code Intelligence│           │ 3. Notebook Kernel  │
+  │ • Token Jaccard     │           │ • AST pattern search│           │ • Persistent VM     │
+  │ • AST Jaccard       │           │ • FTS5/BM25 text    │           │ • Top-level await   │
+  │ • Semantic LCS      │           │ • Symbol & LSP hops │           │ • Stdio JSON RPC    │
+  │ • GitHub tree diff  │           │ • Strict ROUTE RRF  │           │ • Socket daemons    │
+  └─────────────────────┘           └─────────────────────┘           └─────────────────────┘
+```
+
+---
+
+## 🏛️ The Three Pillars
+
+### 1. Algorithmic Variant & Tree Compare
+Deep mathematical comparison across source files, directory trees, or live GitHub repositories without false positives from whitespace or formatting.
+- **Token Jaccard**: Bag-of-tokens set similarity.
+- **AST Signature Jaccard**: Syntax-tree structure comparison invariant to variable renames.
+- **Longest Common Subsequence (LCS)**: Semantic ratio analyzing character/block alignment.
+
+### 2. 4-Channel RRF Code Intelligence (`read_trio_audit`, `trio_route`)
+Federated search combining **AST**, **BM25**, **LSP**, and **ROUTE** channels using Reciprocal Rank Fusion (RRF).
+- **Strict Route Tracing**: Strips guard-clause noise; isolates genuine URL, HTTP, IPC, and router dispatch tables across TypeScript, Python, Go, and Rust.
+
+### 3. Persistent Bun Notebook Kernel
+The estate's standalone execution VM:
+- Top-level `let`/`const`/`class`/`function` bindings persist across cell executions.
+- Top-level `await` supported natively.
+- Zero Jupyter or VS Code dependencies.
+
+---
+
+## 🔌 MCP Stdio Server (7 Tools)
+
+Trio ships a ready-to-run Stdio Model Context Protocol (MCP) server at `mcp/server.ts`:
+
+| Tool | Description |
+|---|---|
+| `rc_compare` | Multi-variant comparison returning token/AST/semantic matrix + diff classifications. |
+| `rc_tree_compare` | Deep pairwise directory tree comparison with paired, only-A, and only-B rollups. |
+| `rc_deps` | Extract dependency specifiers across diverse project manifests. |
+| `rc_short_grep` | High-speed literal and regex search with exact line offsets. |
+| `rc_gh_compare` | Clone two remote GitHub repositories and generate comparative audit rollups. |
+| `read_trio_audit` | Federated parallel AST + BM25 + LSP code intelligence. |
+| `trio_route` | Strict dispatch table tracing across project routers. |
+
+---
+
+## 💻 CLI Usage
+
+### Notebook Kernel
 
 ```sh
 # One-off cell (new kernel per process unless --session)
