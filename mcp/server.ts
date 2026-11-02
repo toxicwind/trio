@@ -18,6 +18,7 @@ import { z } from "zod"
 import { compare, compareTrees, extractDeps } from "../src/compare.ts"
 import { walkTree } from "../src/tree.ts"
 import { executeReadTrioAudit, searchRoutes } from "../src/audit.ts"
+import { semanticOverlap, cosine, embedBgeM3, rerankByQuery } from "../src/semantic.ts"
 import { mkdtempSync } from "node:fs"
 import { spawn } from "node:child_process"
 import { tmpdir } from "node:os"
@@ -52,6 +53,82 @@ server.tool(
   async ({ route, path = ".", limit = 25 }) => {
     const routes = await searchRoutes(path, route, limit)
     return { content: [{ type: "text", text: JSON.stringify({ routes }, null, 2) }] }
+  },
+)
+
+// ─── trio_semantic_rerank: bge-m3 query-relevance rerank ───────────────
+// Experimentally validated 2026-11-02 (E1): query-rerank places the 429-capped
+// provider line above the settings-doc for a "cap concurrent requests" query.
+// Fails open to [] when embeddings are unavailable.
+server.tool(
+  "trio_semantic_rerank",
+  "Rerank a list of code snippets by bge-m3 cosine relevance to a natural-language query. Use when lexical search returns many hits and you want the semantically-relevant ones. Each snippet is embedded together with the query; scores are cosine similarity (0..1, >=0.45 is related, >=0.6 is strong). Fails open to [] if the embedding lane is down.",
+  {
+    query: z.string().describe("Natural-language intent or symbol to rerank by"),
+    snippets: z.array(z.string()).max(200).describe("Code/snippet lines to rerank"),
+  },
+  async ({ query, snippets }) => {
+    const t0 = Date.now()
+    const { scores } = await rerankByQuery(query, snippets)
+    const ranked = scores
+      .map((score, i) => ({ index: i, snippet: (snippets[i] ?? "").slice(0, 300), score: Number(score.toFixed(4)) }))
+      .sort((a, b) => b.score - a.score)
+    return { content: [{ type: "text", text: JSON.stringify({ ranked, ms: Date.now() - t0 }, null, 2) }] }
+  },
+)
+
+// ─── trio_code_sim: bge-m3 code-similarity matrix ──────────────────────
+// Validated: CS1 same-code-shifted 0.847 vs 0.426 diff; CS2 paraphrase-eq
+// 0.747 vs 0.491 unrelated. Refactored/renamed-but-same logic clusters well.
+server.tool(
+  "trio_code_sim",
+  "Semantic code-similarity matrix between N code snippets (bge-m3 embeddings + cosine). Detect near-duplicate or paraphrase-equivalent implementations across files/pens even when renamed. 0.7+ = near-duplicate; 0.5-0.7 = same logic rephrased; <0.45 = unrelated.",
+  {
+    snippets: z.array(z.object({
+      id: z.string().describe("identifier (file path or name)"),
+      text: z.string().max(4000).describe("code text"),
+    })).min(2).max(60).describe("code snippets to compare"),
+  },
+  async ({ snippets }) => {
+    const t0 = Date.now()
+    const vecs = await embedBgeM3(snippets.map(s => s.text.slice(0, 1500)))
+    const pairs = [] as { a: string; b: string; cosine: number; verdict: string }[]
+    for (let i = 0; i < snippets.length; i++) {
+      for (let j = i + 1; j < snippets.length; j++) {
+        const c = cosine(vecs[i]!, vecs[j]!)
+        const verdict = c >= 0.7 ? "near-duplicate" : c >= 0.5 ? "paraphrase-eq" : "unrelated"
+        pairs.push({ a: snippets[i]!.id, b: snippets[j]!.id, cosine: Number(c.toFixed(4)), verdict })
+      }
+    }
+    pairs.sort((a, b) => b.cosine - a.cosine)
+    return { content: [{ type: "text", text: JSON.stringify({ pairs, ms: Date.now() - t0 }, null, 2) }] }
+  },
+)
+
+// ─── trio_product_sim: bge-m3 product/README similarity ────────────────
+// Validated: PS1 sibling-product READMEs 0.459 vs 0.339 unrelated. Use with
+// README-ish prose (0.3-0.5 range — corpus-idiom baselines exist across the
+// estate, so compare RELATIVE similarity, not absolute).
+server.tool(
+  "trio_product_sim",
+  "Semantic similarity between product descriptions/READMEs (bge-m3). Find which product a description belongs to, detect overlapping products across pens, or locate a product's canonical home. Pass document pairs; cosine 0.5+ with sibling docs = likely same product family. NOTE: docs within one estate share idiom vocabulary — compare RELATIVE similarity, not absolute.",
+  {
+    products: z.array(z.object({
+      id: z.string().describe("product/repo id"),
+      text: z.string().max(4000).describe("README/description prose"),
+    })).min(2).max(60),
+  },
+  async ({ products }) => {
+    const t0 = Date.now()
+    const vecs = await embedBgeM3(products.map(p => p.text.slice(0, 1500)))
+    const pairs = [] as { a: string; b: string; cosine: number }[]
+    for (let i = 0; i < products.length; i++) {
+      for (let j = i + 1; j < products.length; j++) {
+        pairs.push({ a: products[i]!.id, b: products[j]!.id, cosine: Number(cosine(vecs[i]!, vecs[j]!).toFixed(4)) })
+      }
+    }
+    pairs.sort((a, b) => b.cosine - a.cosine)
+    return { content: [{ type: "text", text: JSON.stringify({ pairs, ms: Date.now() - t0 }, null, 2) }] }
   },
 )
 

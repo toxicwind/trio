@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { cosine, rerankByQuery } from "./semantic.js";
 
 /** Source extensions we scan for lexical/route hits. */
 const SRC_RE = /\.(ts|tsx|js|jsx|json|md|py|go|rs)$/;
@@ -28,6 +29,8 @@ export interface FusedTrioHit {
 	snippet: string;
 	rrfScore: number;
 	channels: string[];
+	/** bge-m3 cosine relevance to the query (SEMANTIC channel), 0 when absent. */
+	semantic?: number;
 }
 
 export interface AuditArtifacts {
@@ -206,6 +209,36 @@ export async function searchRoutes(dir: string, mode: string, limit = 25): Promi
 	return hits.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
+/**
+ * SEMANTIC channel — embed the fused candidates and keep query-relevant hits.
+ * bge-m3 (free, unlimited) reranks snippets by cosine to the query. This is
+ * the inferred-relevance signal that lexical channels miss: a line that says
+ * "429 concurrency_limit_exceeded" ranks above "maxInFlightRequests" docs for
+ * a query about capping concurrent upstream requests.
+ *
+ * Experimentally validated 2026-11-02 (estate `trio` E1): query-rerank places
+ * the 429-capped provider line at sim=0.638 vs the settings-doc at 0.520.
+ * Fails open: any embed failure returns `[]` and drops the channel.
+ */
+export async function semanticRerank(
+	query: string,
+	candidates: { file: string; line: number; snippet: string }[],
+	opts: { topN?: number } = {},
+): Promise<TrioHit[]> {
+	if (candidates.length === 0) return [];
+	const { scores } = await rerankByQuery(
+		query,
+		candidates.map(c => c.snippet),
+		opts,
+	);
+	if (scores.length === 0) return [];
+	return candidates
+		.map((c, i) => ({ ...c, source: "semantic" as const, score: scores[i]! }))
+		.filter(h => h.score >= 0.45) // below this it's unrelated noise (E6/E8 floor)
+		.sort((a, b) => b.score - a.score)
+		.slice(0, 40);
+}
+
 // ── persistence (untruncated run artifacts) ──────────────────────────────
 function persistArtifacts(pairs: { channel: string; hits: TrioHit[] }[]): AuditArtifacts | null {
 	try {
@@ -234,6 +267,8 @@ export async function executeReadTrioAudit(
 	const absDir = resolve(targetDir);
 	const symbol = primarySymbol(query) ?? null;
 	const astNeedle = symbol ?? query.trim();
+	// Phase 1: lexical/structural channels in parallel (every channel fails
+	// open: a spawn error or empty corpus yields [] and the others still fuse).
 	const [astRes, bm25Hits, lspHits, routeHits] = await Promise.all([
 		searchAst(absDir, astNeedle),
 		searchBm25(absDir, query),
@@ -241,6 +276,23 @@ export async function executeReadTrioAudit(
 		searchRoutes(absDir, query),
 	]);
 	const astHits = astRes.hits;
+	// Phase 2: SEMANTIC channel — embed the UNION of lexical hits and rerank
+	// by query cosine. bge-m3 is free/unlimited so this is cheap; it adds the
+	// inferred-relevance signal lexical matching misses. Always fails open.
+	let semanticHits: TrioHit[] = [];
+	try {
+		const seen = new Set<string>();
+		const dedup: { file: string; line: number; snippet: string }[] = [];
+		for (const h of [...astHits, ...bm25Hits, ...lspHits, ...routeHits]) {
+			const key = `${h.file}:${h.line}`;
+			if (seen.has(key)) continue;
+			seen.add(key);
+			dedup.push({ file: h.file, line: h.line, snippet: h.snippet.slice(0, 400) });
+		}
+		semanticHits = await semanticRerank(query, dedup);
+	} catch {
+		semanticHits = [];
+	}
 	const K = 60;
 	const map = new Map<string, { hit: TrioHit; rrf: number; channels: Set<string> }>();
 	function addRanked(list: TrioHit[], channel: string) {
@@ -261,6 +313,7 @@ export async function executeReadTrioAudit(
 	addRanked(bm25Hits, "BM25");
 	addRanked(lspHits, "LSP");
 	addRanked(routeHits, "ROUTE");
+	if (semanticHits.length > 0) addRanked(semanticHits, "SEMANTIC");
 	const hits: FusedTrioHit[] = [...map.values()]
 		.sort((a, b) => b.rrf - a.rrf)
 		.slice(0, limit)

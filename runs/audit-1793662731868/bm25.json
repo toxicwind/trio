@@ -1,0 +1,705 @@
+{
+  "count": 100,
+  "hits": [
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 3,
+      "snippet": "* semaphore (default maxConcurrency=4, tunable via env or provider config) and",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 2,
+      "snippet": "* Concurrency-queued fetch — first-class, provider-agnostic admission control",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 10,
+      "snippet": "* primitive (concurrency-queue.ts), KEYED BY PROVIDER (or MODEL) so any",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 13,
+      "snippet": "* The cap for each provider/model is declared in the PROVIDER_CONCURRENCY_LIMITS",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 15,
+      "snippet": "* the tau settings record `modelConcurrency` (provider or model id key),",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 16,
+      "snippet": "* env `TAU_CONCURRENCY_<PROVIDER_UPPER>`, or the options argument. Providers",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 21,
+      "snippet": "*     { provider: model.provider, model: model.id, maxConcurrency: ... },",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 32,
+      "snippet": "export const PROVIDER_CONCURRENCY_LIMITS: Record<string, number> = {",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 40,
+      "snippet": "* Resolve the effective concurrency cap for a provider+model pair:",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 66,
+      "snippet": "const envProvider = process.env[`TAU_CONCURRENCY_${provider.toUpperCase().replace(/[^A-Z0-9]/g, \"_\")}`];",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 68,
+      "snippet": "const registryProvider = PROVIDER_CONCURRENCY_LIMITS[provider];",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 89,
+      "snippet": "const cap = resolveConcurrencyCap(options.provider, options.model, options.maxConcurrency, options.settings);",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/usage/umans.ts",
+      "line": 179,
+      "snippet": "function buildConcurrencyLimit(payload: UmansUsagePayload, provider: string): UsageLimit | null {",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/usage/umans.ts",
+      "line": 188,
+      "snippet": "scope: { provider, windowId: \"concurrency\" },",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/usage/umans.ts",
+      "line": 236,
+      "snippet": "const concurrency = buildConcurrencyLimit(payload, params.provider);",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/utils/openai-http.ts",
+      "line": 68,
+      "snippet": "// OpenAI-compatible provider envelope (e.g. freeinference): `\"type\":\"concurrency_limit_exceeded\"`.",
+      "source": "bm25",
+      "score": 0.6666666666666666
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 273,
+      "snippet": "* same-provider account probes.",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 275,
+      "snippet": "fetchUsage(options: { signal?: AbortSignal; maxAccountsPerProvider?: number } = {}): Promise<UsageResponse> {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 276,
+      "snippet": "const requestedAccountCount = options.maxAccountsPerProvider;",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 292,
+      "snippet": "query?: { sinceMs?: number; provider?: string },",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 297,
+      "snippet": "if (query?.provider) params.set(\"provider\", query.provider);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 350,
+      "snippet": "async listDisabledCredentials(provider?: string, signal?: AbortSignal): Promise<DisabledCredentialSummary[]> {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 352,
+      "snippet": "if (provider) params.set(\"provider\", provider);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 367,
+      "snippet": "provider: string,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/client.ts",
+      "line": 371,
+      "snippet": "const body: CredentialUploadRequest = { provider, credential };",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 123,
+      "snippet": "key => key !== \"provider\" && key !== \"account\" && key !== \"priority\" && key !== \"reservePct\",",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 128,
+      "snippet": "const provider = policy.provider;",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 129,
+      "snippet": "if (typeof provider !== \"string\" || provider.length === 0) {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 130,
+      "snippet": "throw new AIError.ConfigurationError(`${path}.provider must be a non-empty string`);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 132,
+      "snippet": "if (provider.trim() !== provider) {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 133,
+      "snippet": "throw new AIError.ConfigurationError(`${path}.provider must not contain surrounding whitespace`);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 174,
+      "snippet": "provider,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 274,
+      "snippet": "for (const [provider, value] of Object.entries(parsed)) {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 275,
+      "snippet": "const normalizedProvider = provider.trim();",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 276,
+      "snippet": "if (normalizedProvider.length === 0) {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 277,
+      "snippet": "throw new AIError.ConfigurationError(\"TAU_AUTH_BROKER_ACCOUNT_POOL_FILE contains an empty provider id\");",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 279,
+      "snippet": "if (provider !== normalizedProvider) {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 281,
+      "snippet": "\"TAU_AUTH_BROKER_ACCOUNT_POOL_FILE contains a provider id with surrounding whitespace\",",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 286,
+      "snippet": "`TAU_AUTH_BROKER_ACCOUNT_POOL_FILE entry for ${provider} must be an array of identity keys`,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 293,
+      "snippet": "`TAU_AUTH_BROKER_ACCOUNT_POOL_FILE entry for ${provider} contains an invalid identity key`,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 298,
+      "snippet": "`TAU_AUTH_BROKER_ACCOUNT_POOL_FILE entry for ${provider} contains an identity key with surrounding whitespace`,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/discover.ts",
+      "line": 303,
+      "snippet": "accountPool.set(provider, identities);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 4,
+      "snippet": "* `upsert*`, `delete*ForProvider`) throw because login flows are server-side.",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 24,
+      "snippet": "import type { Provider } from \"../types\";",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 36,
+      "snippet": "* Per-provider OAuth identities visible to this trusted broker client.",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 37,
+      "snippet": "* Missing providers are unrestricted; an empty set excludes that provider's",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 43,
+      "snippet": "entry: Pick<SnapshotEntry, \"provider\" | \"credential\" | \"identityKey\">,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 47,
+      "snippet": "const identities = accountPool?.get(entry.provider);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 70,
+      "snippet": "const provider = a.providerKey.localeCompare(b.providerKey);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 71,
+      "snippet": "if (provider !== 0) return provider;",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 81,
+      "snippet": "providerKey: block.providerKey,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 99,
+      "snippet": "leftBlock.providerKey !== rightBlock.providerKey ||",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 165,
+      "snippet": "provider: Provider,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 182,
+      "snippet": "if (orgId) return base ? `${provider}\\0org:${orgId}|${base}` : `${provider}\\0org:${orgId}`;",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 183,
+      "snippet": "if (base) return `${provider}\\0${base}`;",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 260,
+      "snippet": "* provider + credential material), recomputed after every snapshot mutation.",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 283,
+      "snippet": "#brokerUsageProviderByCredentialId = new Map<number, Provider>();",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 284,
+      "snippet": "#brokerUsageAccountCounts = new Map<Provider, number>();",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 285,
+      "snippet": "/** Per-snapshot lookup of oauth credentials by provider; rebuilt when `#snapshot` is replaced. */",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 286,
+      "snippet": "#usageFilterLookup?: { snapshot: SnapshotResponse; byProvider: Map<Provider, OAuthCredential[]> };",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 288,
+      "snippet": "#usageFilterResult?: { input: UsageReport[]; byProvider: Map<Provider, OAuthCredential[]>; output: UsageReport[] };",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 299,
+      "snippet": "/** Pending observed usage keyed by `installId\\u0000app\\u0000provider\\u0000model`, merged until flush. */",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 312,
+      "snippet": "? new Map([...opts.accountPool].map(([provider, identities]) => [provider, new Set(identities)]))",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 367,
+      "snippet": "* fields {@link listAuthCredentials} exposes (id, provider, credential). A",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 373,
+      "snippet": "entry => `${entry.id}\\u0000${entry.provider}\\u0000${JSON.stringify(entry.credential)}`,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 383,
+      "snippet": "`${entry.id}\\0${block.providerKey}\\0${block.blockScope}`,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 391,
+      "snippet": "const key = `${entry.id}\\0${block.providerKey}\\0${block.blockScope}`;",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 642,
+      "snippet": "listAuthCredentials(provider?: string): StoredAuthCredential[] {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 646,
+      "snippet": "if (provider !== undefined && entry.provider !== provider) continue;",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 649,
+      "snippet": "provider: entry.provider,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 658,
+      "snippet": "listDisabledCredentials(provider?: string, signal?: AbortSignal): Promise<DisabledCredentialSummary[]> {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 660,
+      "snippet": "return this.#client.listDisabledCredentials(provider, signal);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 663,
+      "snippet": "getCredentialBlock(credentialId: number, providerKey: string, blockScope: string): number | undefined {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 670,
+      "snippet": "candidate => candidate.providerKey === providerKey && candidate.blockScope === blockScope,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 676,
+      "snippet": "getCredentialBlockReconcileAfter(credentialId: number, providerKey: string, blockScope: string): number | undefined {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 677,
+      "snippet": "if (this.getCredentialBlock(credentialId, providerKey, blockScope) === undefined) return undefined;",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 678,
+      "snippet": "return this.#credentialBlockReconcileAfter.get(`${credentialId}\\0${providerKey}\\0${blockScope}`);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 693,
+      "snippet": "providerKey: block.providerKey,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 709,
+      "snippet": "`${block.credentialId}\\0${block.providerKey}\\0${block.blockScope}`,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 721,
+      "snippet": "providerKey: block.providerKey,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 728,
+      "snippet": "deleteCredentialBlock(_credentialId: number, _providerKey: string, _blockScope: string): void {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 834,
+      "snippet": "* entries returned by the server replace the provider's rows in our local",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 838,
+      "snippet": "async upsertAuthCredential(provider: string, credential: AuthCredential): Promise<StoredAuthCredential[]> {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 840,
+      "snippet": "const { entries } = await this.#client.uploadCredential(provider, credential);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 841,
+      "snippet": "this.#applyProviderEntries(provider, entries);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 843,
+      "snippet": "return this.listAuthCredentials(provider);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 847,
+      "snippet": "* Replace-all semantics: disable every active credential for the provider,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 849,
+      "snippet": "* key clobbers any previously stored key for the same provider.",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 851,
+      "snippet": "async replaceAuthCredentials(provider: string, credentials: AuthCredential[]): Promise<StoredAuthCredential[]> {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 852,
+      "snippet": "const existing = this.listAuthCredentials(provider);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 858,
+      "snippet": "provider,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 865,
+      "snippet": "// reader cannot momentarily see old + new together for the same provider.",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 866,
+      "snippet": "this.#removeProviderEntries(provider);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 868,
+      "snippet": "const { entries } = await this.#client.uploadCredential(provider, credential);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 869,
+      "snippet": "this.#applyProviderEntries(provider, entries);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 872,
+      "snippet": "return this.listAuthCredentials(provider);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 876,
+      "snippet": "* Logout: disable every active credential for the provider on the broker,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 880,
+      "snippet": "async deleteAuthCredentials(provider: string, disabledCause: string): Promise<void> {",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 881,
+      "snippet": "const existing = this.listAuthCredentials(provider);",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/auth-broker/remote-store.ts",
+      "line": 887,
+      "snippet": "provider,",
+      "source": "bm25",
+      "score": 0.3333333333333333
+    }
+  ]
+}

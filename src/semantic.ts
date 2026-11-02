@@ -1,27 +1,27 @@
 /**
- * semantic — cross-corpus semantic overlap via freeinference bge-m3 embeddings.
+ * Semantic — cross-corpus overlap + query-relevance rerank via freeinference
+ * bge-m3 embeddings (free, unlimited, ~99.9% — estate doctrine: embed
+ * everything, never skip).
  *
- * Pure math + one async `embedTexts` boundary (inject a fetcher for tests).
- * Produces:
- *   - per-file vectors (bge-m3)
- *   - cosine similarity matrix (pairwise, bounded)
- *   - a corpus-level overlap score (mean of top-k cross-pair similarities)
- *   - a stable top-overlap ranking for the prose layer
+ * Primitive surface reused by both trio's semantic-overlap tool and the
+ * audit rerank channel. Pure math + one async `embedTexts` boundary (inject a
+ * fetcher for tests).
  */
+
 export interface OverlapFile {
 	path: string;
 	text: string;
 }
 
 export interface OverlapPair {
-	a: string;          // file path in corpus A
-	b: string;          // file path in corpus B
-	cosine: number;     // 0..1
+	a: string; // file path in corpus A
+	b: string; // file path in corpus B
+	cosine: number; // 0..1
 }
 
 export interface SemanticOverlap {
-	pairs: OverlapPair[];       // sorted desc by cosine, capped
-	corpusOverlap: number;      // 0..1 mean of top-k cross pairs
+	pairs: OverlapPair[]; // sorted desc by cosine, capped
+	corpusOverlap: number; // 0..1 mean of top-k cross pairs
 	topK: number;
 	aCount: number;
 	bCount: number;
@@ -100,6 +100,33 @@ export async function semanticOverlap(
 	return { pairs: top, corpusOverlap, topK: top.length, aCount: a.length, bCount: b.length };
 }
 
+/**
+ * Rerank an ordered list of code snippets by semantic relevance to the query.
+ * Embeds the query + snippets once (bge-m3), returns a score per snippet.
+ * Used by the audit SEMANTIC channel so symbol hits that are semantically
+ * relevant (not just lexically present) float to the top of the RRF fusion.
+ */
+export async function rerankByQuery(
+	query: string,
+	snippets: string[],
+	opts: { embedFn?: EmbedFetcher; topN?: number } = {},
+): Promise<{ scores: number[]; vector: number[] | null }> {
+	const topN = opts.topN ?? 200;
+	const embed = opts.embedFn ?? embedBgeM3;
+	if (snippets.length === 0 || !query.trim()) return { scores: [], vector: null };
+
+	const clipped = snippets.slice(0, topN).map(s => s.slice(0, 800));
+	try {
+		const [qVec, ...sVecs] = await embed([query.trim(), ...clipped]);
+		const scores = sVecs.map(v => cosine(qVec, v));
+		return { scores, vector: qVec };
+	} catch {
+		// Offline / key missing: drop the channel silently (fused hits keep
+		// their lexical ranks; never fail the audit because embeddings are down).
+		return { scores: [], vector: null };
+	}
+}
+
 /** Default embedder: freeinference /v1/embeddings with bge-m3. Key from keyring. */
 export async function embedBgeM3(texts: string[]): Promise<number[][]> {
 	if (texts.length === 0) return [];
@@ -123,12 +150,19 @@ async function readKeyenv(): Promise<string | undefined> {
 	try {
 		const { execFile } = await import("node:child_process");
 		const out = await new Promise<string>((resolve, reject) => {
-			execFile("/home/toxic/.local/bin/secretsmith", ["get", "--label", "FREEINFERENCE_API_KEY", "--show"], { timeout: 10000 }, (err, stdout) =>
+			execFile("/home/toxic/.local/bin/secretsmith", ["--json", "get", "FREEINFERENCE_API_KEY", "--show"], { timeout: 10000 }, (err, stdout) =>
 				err ? reject(err) : resolve(stdout),
 			);
 		});
-		const m = out.match(/secret:\s*(\S+)/);
-		return m ? m[1] : undefined;
+		// --json returns {secret: "..."}; plain get returns a blob. Parse both.
+		try {
+			const parsed = JSON.parse(out) as { secret?: string };
+			if (typeof parsed.secret === "string") return parsed.secret;
+		} catch {
+			const m = out.match(/secret:\s*(\S+)/);
+			if (m) return m[1];
+		}
+		return undefined;
 	} catch {
 		return undefined;
 	}

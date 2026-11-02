@@ -1,0 +1,222 @@
+{
+  "count": 31,
+  "hits": [
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/index.ts",
+      "line": 6,
+      "snippet": "export * from \"./freeinference-coercion\";",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/coercion.ts",
+      "line": 132,
+      "snippet": "* \"* task\", \"- task\", \"1. task\". Real DeepSeek-family streams (FreeInference /",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 2,
+      "snippet": "* freeinference coercion — model-specific tool-argument coercion recovery for",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 3,
+      "snippet": "* the three current FreeInference text models (deepseek-v4-flash, glm-5.3-flash,",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 24,
+      "snippet": "* file is the annotated FreeInference-facing registry the fixtures pin to.",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 28,
+      "snippet": "/** The three current FreeInference text models that emit tool calls. */",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 29,
+      "snippet": "export const FREEINFERENCE_TOOL_MODELS = [\"deepseek-v4-flash\", \"glm-5.3-flash\", \"qwen3.6-35b\"] as const;",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 31,
+      "snippet": "export type FreeInferenceModel = (typeof FREEINFERENCE_TOOL_MODELS)[number];",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 33,
+      "snippet": "/** Coerce a FreeInference tool-argument value against its JSON schema. */",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 34,
+      "snippet": "export function coerceFreeInferenceValue(raw: string, schema: unknown): unknown {",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 43,
+      "snippet": "* by reasoning). FreeInference's tool models (deepseek-v4-flash, glm-5.3-flash,",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 47,
+      "snippet": "export const FREEINFERENCE_THINKING_BUDGET_RATIO = 1 / 3;",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 50,
+      "snippet": "* Resolve the thinking budget for a FreeInference tool model so reasoning uses",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 55,
+      "snippet": "export function resolveFreeInferenceThinkingBudget(",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/dialect/freeinference-coercion.ts",
+      "line": 61,
+      "snippet": "const cap = modelMaxTokens === null ? platformFloor : Math.floor(modelMaxTokens * FREEINFERENCE_THINKING_BUDGET_RATIO);",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/inference-headers.ts",
+      "line": 46,
+      "snippet": "// freeinference.org gateway (verified 2026-10-28): X-Session-ID is the",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/inference-headers.ts",
+      "line": 50,
+      "snippet": "if (options.provider === \"freeinference\" && sessionId) {",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/openai-completions.ts",
+      "line": 86,
+      "snippet": "import { queuedFreeInferenceFetch } from \"./freeinference-fetch\";",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/openai-completions.ts",
+      "line": 893,
+      "snippet": "// `concurrency_limit_exceeded`, e.g. freeinference limit=2)",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/openai-shared.ts",
+      "line": 334,
+      "snippet": "// Providers banning fake user agents (freeinference ToS) get truthful",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 2,
+      "snippet": "* FreeInference concurrency queue — wraps fetch calls with a sliding-window",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 6,
+      "snippet": "* Why this exists: freeinference.org enforces a per-key concurrency limit",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 14,
+      "snippet": "*   const queue = new FreeInferenceQueue({ maxConcurrency: 4 });",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 21,
+      "snippet": "/** Max concurrent in-flight requests. Default: 4 (freeinference supports up to ~4-8). */",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 50,
+      "snippet": "export class FreeInferenceQueue {",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 143,
+      "snippet": "reject(new Error(`FreeInference 429 after ${retryCount + 1} retries: ${body.slice(0, 200)}`));",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 198,
+      "snippet": "* Default singleton for the freeinference provider.",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/concurrency-queue.ts",
+      "line": 202,
+      "snippet": "export const DEFAULT_QUEUE = new FreeInferenceQueue({",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 5,
+      "snippet": "* Some endpoints enforce per-key concurrency admission (freeinference.org:",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/providers/queued-fetch.ts",
+      "line": 33,
+      "snippet": "freeinference: 2, // verified live 2026-11-02 on the pro key",
+      "source": "bm25",
+      "score": 0.5
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/utils/openai-http.ts",
+      "line": 68,
+      "snippet": "// OpenAI-compatible provider envelope (e.g. freeinference): `\"type\":\"concurrency_limit_exceeded\"`.",
+      "source": "bm25",
+      "score": 0.5
+    }
+  ]
+}

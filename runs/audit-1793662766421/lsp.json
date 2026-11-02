@@ -1,0 +1,77 @@
+{
+  "count": 6,
+  "hits": [
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/stream.ts",
+      "line": 207,
+      "snippet": "export function configureProviderMaxInFlightRequests(limits: Record<string, number> | undefined): void {",
+      "source": "lsp",
+      "score": 1,
+      "context": [
+        "",
+        "export function configureProviderMaxInFlightRequests(limits: Record<string, number> | undefined): void {",
+        "// Merge, never replace: the built-in seeds (verified admission caps) stay"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/test/provider-inflight.test.ts",
+      "line": 7,
+      "snippet": "import { __providerInFlightForTesting, configureProviderMaxInFlightRequests, streamSimple } from \"@tau/tau-ai/stream\";",
+      "source": "lsp",
+      "score": 1,
+      "context": [
+        "import { createMockModel, registerMockApi } from \"@tau/tau-ai/providers/mock\";",
+        "import { __providerInFlightForTesting, configureProviderMaxInFlightRequests, streamSimple } from \"@tau/tau-ai/stream\";",
+        "import type { Context } from \"@tau/tau-ai/types\";"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/test/provider-inflight.test.ts",
+      "line": 21,
+      "snippet": "configureProviderMaxInFlightRequests(undefined);",
+      "source": "lsp",
+      "score": 0.9,
+      "context": [
+        "clearCustomApis();",
+        "configureProviderMaxInFlightRequests(undefined);",
+        "__providerInFlightForTesting.setRoot(undefined);"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/coding-agent/src/config/settings.ts",
+      "line": 20,
+      "snippet": "import { configureProviderMaxInFlightRequests } from \"@tau/tau-ai/stream\";",
+      "source": "lsp",
+      "score": 1,
+      "context": [
+        "import { configureCredentialRedaction } from \"@tau/tau-ai/providers/transform-messages\";",
+        "import { configureProviderMaxInFlightRequests } from \"@tau/tau-ai/stream\";",
+        "import {"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/coding-agent/src/config/settings.ts",
+      "line": 3484,
+      "snippet": "configureProviderMaxInFlightRequests(validateProviderMaxInFlightRequests(value));",
+      "source": "lsp",
+      "score": 0.9,
+      "context": [
+        "\"providers.maxInFlightRequests\": value => {",
+        "configureProviderMaxInFlightRequests(validateProviderMaxInFlightRequests(value));",
+        "},"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/coding-agent/src/config/settings.ts",
+      "line": 3664,
+      "snippet": "configureProviderMaxInFlightRequests(undefined);",
+      "source": "lsp",
+      "score": 0.9,
+      "context": [
+        "clearBoundSettingsMethods();",
+        "configureProviderMaxInFlightRequests(undefined);",
+        "configureCredentialRedaction(false);"
+      ]
+    }
+  ]
+}

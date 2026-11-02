@@ -1,0 +1,65 @@
+{
+  "count": 5,
+  "hits": [
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/stream.ts",
+      "line": 199,
+      "snippet": "options?: Pick<StreamOptions, \"maxInFlightRequests\">,",
+      "source": "lsp",
+      "score": 0.9,
+      "context": [
+        "provider: string,",
+        "options?: Pick<StreamOptions, \"maxInFlightRequests\">,",
+        "): number | undefined {"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/stream.ts",
+      "line": 201,
+      "snippet": "const limits = options?.maxInFlightRequests ?? configuredProviderMaxInFlightRequests;",
+      "source": "lsp",
+      "score": 1,
+      "context": [
+        "): number | undefined {",
+        "const limits = options?.maxInFlightRequests ?? configuredProviderMaxInFlightRequests;",
+        "const value = limits[provider];"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/stream.ts",
+      "line": 660,
+      "snippet": "function withProviderInFlightLimit<TOptions extends Pick<StreamOptions, \"signal\" | \"maxInFlightRequests\">>(",
+      "source": "lsp",
+      "score": 1,
+      "context": [
+        "",
+        "function withProviderInFlightLimit<TOptions extends Pick<StreamOptions, \"signal\" | \"maxInFlightRequests\">>(",
+        "model: Model<Api>,"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/stream.ts",
+      "line": 2088,
+      "snippet": "maxInFlightRequests: options?.maxInFlightRequests,",
+      "source": "lsp",
+      "score": 0.9,
+      "context": [
+        "providerSessionState: options?.providerSessionState,",
+        "maxInFlightRequests: options?.maxInFlightRequests,",
+        "toolNamespacesInfo: options?.toolNamespacesInfo,"
+      ]
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/types.ts",
+      "line": 530,
+      "snippet": "maxInFlightRequests?: Record<string, number>;",
+      "source": "lsp",
+      "score": 0.9,
+      "context": [
+        "*/",
+        "maxInFlightRequests?: Record<string, number>;",
+        "/**"
+      ]
+    }
+  ]
+}

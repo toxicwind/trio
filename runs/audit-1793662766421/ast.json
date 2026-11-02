@@ -1,0 +1,47 @@
+{
+  "count": 6,
+  "hits": [
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/src/stream.ts",
+      "line": 206,
+      "snippet": "export function configureProviderMaxInFlightRequests(limits: Record<string, number> | undefined): void {",
+      "source": "ast",
+      "score": 1
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/test/provider-inflight.test.ts",
+      "line": 6,
+      "snippet": "import { __providerInFlightForTesting, configureProviderMaxInFlightRequests, streamSimple } from \"@tau/tau-ai/stream\";",
+      "source": "ast",
+      "score": 1
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/ai/test/provider-inflight.test.ts",
+      "line": 20,
+      "snippet": "configureProviderMaxInFlightRequests(undefined);",
+      "source": "ast",
+      "score": 1
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/coding-agent/src/config/settings.ts",
+      "line": 19,
+      "snippet": "import { configureProviderMaxInFlightRequests } from \"@tau/tau-ai/stream\";",
+      "source": "ast",
+      "score": 1
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/coding-agent/src/config/settings.ts",
+      "line": 3483,
+      "snippet": "configureProviderMaxInFlightRequests(validateProviderMaxInFlightRequests(value));",
+      "source": "ast",
+      "score": 1
+    },
+    {
+      "file": "/home/toxic/pens/olympus/products/tau/packages/coding-agent/src/config/settings.ts",
+      "line": 3663,
+      "snippet": "configureProviderMaxInFlightRequests(undefined);",
+      "source": "ast",
+      "score": 1
+    }
+  ]
+}
