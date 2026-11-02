@@ -28,7 +28,7 @@ const server = new McpServer({ name: "trio", version: "0.4.0" })
 // ─── read_trio_audit: parallel AST + BM25 + LSP + ROUTE federated search ──
 server.tool(
   "read_trio_audit",
-  "Parallel AST + BM25 + LSP federated code search and architectural audit. Fuses structural code matches (ast-grep), lexical tokens (BM25), and type/symbol definitions (LSP + ROUTE dispatch tracing) using Reciprocal Rank Fusion (RRF). Routes over TS/JS/Python/Rust/Go.",
+  "Parallel AST + BM25 + symbol-ref + ROUTE federated code search and architectural audit. Anchors on the primary identifier in the query (so filler words never dominate), fuses structural matches (ast-grep), lexical tokens (BM25), and declaration+reference symbol hits using RRF. Full untruncated per-channel results are persisted to runs/audit-<ts>/*.json artifacts (returned in `artifacts`).",
   {
     query: z.string().describe("Symbol, pattern, or search terms to audit across the codebase"),
     path: z.string().optional().describe("Root path or directory to search within (defaults to '.')"),

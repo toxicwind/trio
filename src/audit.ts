@@ -5,11 +5,13 @@
  * route-traces estate routers (rhodochrosite proxy is Rust).
  */
 import { spawnSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 /** Source extensions we scan for lexical/route hits. */
 const SRC_RE = /\.(ts|tsx|js|jsx|json|md|py|go|rs)$/;
+const CODE_RE = /\.(ts|tsx|js|jsx|rs|py|go)$/;
 
 export interface TrioHit {
 	file: string;
@@ -17,6 +19,7 @@ export interface TrioHit {
 	snippet: string;
 	source: "ast" | "bm25" | "lsp" | "route";
 	score: number;
+	context?: string[];
 }
 
 export interface FusedTrioHit {
@@ -25,6 +28,11 @@ export interface FusedTrioHit {
 	snippet: string;
 	rrfScore: number;
 	channels: string[];
+}
+
+export interface AuditArtifacts {
+	dir: string;
+	files: { channel: string; path: string; count: number }[];
 }
 
 const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".cache", "archive", "target", "vendor"]);
@@ -48,33 +56,88 @@ async function walkFiles(dir: string, depth: number, want: (name: string) => boo
 	}
 }
 
+// ── query analysis ───────────────────────────────────────────────────────
+// A symbol query ("startBunStdinPump definition call sites") must anchor every
+// structured channel on the REAL identifier, not the filler words. Stopwords
+// here are deliberate: they are the words models paste around a symbol.
+const STOPWORDS = new Set([
+	"and", "or", "the", "for", "with", "from", "into", "any", "all", "its", "are", "was", "not", "but",
+	"definition", "definitions", "called", "calls", "call", "callers", "caller", "sites", "site", "usage",
+	"uses", "used", "using", "reference", "references", "where", "declared", "declaration", "symbol",
+	"search", "find", "findings", "result", "results", "function", "method", "class", "line", "across",
+]);
+
+const IDENT_RE = /[A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*/g;
+
+function extractIdentifiers(query: string): string[] {
+	const seen = new Set<string>();
+	const out: string[] = [];
+	for (const m of query.matchAll(IDENT_RE)) {
+		const ident = m[0];
+		if (STOPWORDS.has(ident) || seen.has(ident)) continue;
+		seen.add(ident);
+		out.push(ident);
+	}
+	return out;
+}
+
+/** Primary identifier the AST/LSP channels anchor on; longest wins. */
+export function primarySymbol(query: string): string | undefined {
+	const idents = extractIdentifiers(query);
+	if (idents.length === 0) return undefined;
+	return idents.reduce((a, b) => (b.length > a.length ? b : a));
+}
+
+function escapeRegex(text: string): string {
+	return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function searchBm25(dir: string, query: string): Promise<TrioHit[]> {
 	const hits: TrioHit[] = [];
-	const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-	if (!terms.length) return hits;
+	const symbols = extractIdentifiers(query);
+	const terms = new Set<string>(symbols);
+	for (const t of query.toLowerCase().split(/\s+/).filter(Boolean)) {
+		if (!STOPWORDS.has(t) && !/^[a-z]+$/i.test(t)) terms.add(t);
+	}
+	if (!terms.size) return hits;
 	await walkFiles(dir, 0, (name) => SRC_RE.test(name), async (file) => {
 		const content = await readFile(file, "utf8");
 		const lines = content.split("\n");
 		for (let i = 0; i < lines.length; i++) {
-			const lineLower = (lines[i] ?? "").toLowerCase();
+			const line = lines[i] ?? "";
+			const lineLower = line.toLowerCase();
+			// Symbol-anchored: once a real identifier is in the query, a line must
+			// carry one of them or it is filler-word noise ("definition", "call").
+			if (symbols.length && !symbols.some((s) => lineLower.includes(s.toLowerCase()))) continue;
 			let matches = 0;
 			for (const t of terms) if (lineLower.includes(t)) matches++;
 			if (matches > 0) {
-				hits.push({ file, line: i + 1, snippet: (lines[i] ?? "").trim(), source: "bm25", score: matches / terms.length });
+				hits.push({ file, line: i + 1, snippet: line.trim(), source: "bm25", score: matches / terms.size });
 			}
 		}
 	});
-	return hits.sort((a, b) => b.score - a.score).slice(0, 50);
+	return hits.sort((a, b) => b.score - a.score).slice(0, 100);
 }
 
-/** ast-grep structural search over any language ast-grep knows. */
-export async function searchAst(dir: string, pattern: string): Promise<TrioHit[]> {
-	const hits: TrioHit[] = [];
-	const res = spawnSync("ast-grep", ["run", "--pattern", pattern, "--json", dir], {
+export interface AstResult {
+	hits: TrioHit[];
+	parseIssues: number;
+	stderr: string;
+}
+
+/** ast-grep structural search; surfaces parse failures instead of swallowing. */
+export async function searchAst(dir: string, pattern: string): Promise<AstResult> {
+	const empty: AstResult = { hits: [], parseIssues: 0, stderr: "" };
+	const needle = pattern?.trim();
+	if (!needle) return empty;
+	const res = spawnSync("ast-grep", ["run", "--pattern", needle, "--json", dir], {
 		encoding: "utf8",
-		maxBuffer: 20 * 1024 * 1024,
+		maxBuffer: 40 * 1024 * 1024,
 	});
-	if (res.status === 0 && res.stdout.trim()) {
+	const stderr = (res.stderr ?? "").toString().trim();
+	const hits: TrioHit[] = [];
+	let parseIssues = 0;
+	if (res.stdout && res.stdout.trim()) {
 		try {
 			const parsed = JSON.parse(res.stdout) as Array<{ file: string; range: { start: { line: number } }; lines: string }>;
 			for (const p of parsed) {
@@ -82,36 +145,31 @@ export async function searchAst(dir: string, pattern: string): Promise<TrioHit[]
 			}
 		} catch {}
 	}
-	return hits;
+	const pm = /(\d+)\s*parse error/i.exec(stderr);
+	if (pm) parseIssues = Number(pm[1]);
+	else if (/parse error/i.test(stderr)) parseIssues = 1;
+	return { hits, parseIssues, stderr: stderr.slice(0, 400) };
 }
 
-/** Symbol/declaration lexical scan (TS emphasis, but matches any identifier-ish needle). */
+/** Symbol-reference scan: declaration AND reference lines, word-boundary, with context. */
 export async function searchLsp(dir: string, symbol: string): Promise<TrioHit[]> {
 	const hits: TrioHit[] = [];
-	const needle = symbol.trim();
+	const needle = symbol?.trim();
 	if (!needle) return hits;
-	const script = `
-	import { readdir, readFile } from "node:fs/promises";
-	import { join } from "node:path";
-	const SKIP = new Set(["node_modules",".git","dist",".cache","target","vendor","archive"]);
-	async function scan(cur){
-		try{ const es=await readdir(cur,{withFileTypes:true});
-		for(const e of es){ if(e.isDirectory()){ if(!SKIP.has(e.name)) await scan(join(cur,e.name)); }
-		else if(e.isFile() && /\\.(ts|tsx|rs|py|go|js)$/.test(e.name)){ const p=join(cur,e.name);
-		try{ const code=await readFile(p,"utf8"); const lines=code.split("\\n");
-		lines.forEach((l,idx)=>{ if(l.includes(${JSON.stringify(needle)}) && /function|class|const|let|export|import|pub |def |struct |fn /.test(l)){ console.log(JSON.stringify({file:p,line:idx+1,snippet:l.trim()}));} });
-		}catch{} }} }catch{} }
-	await scan(${JSON.stringify(dir)});
-	`;
-	const res = spawnSync("bun", ["-e", script], { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 });
-	if (res.status === 0 && res.stdout.trim()) {
-		for (const line of res.stdout.trim().split("\n")) {
-			try {
-				const p = JSON.parse(line);
-				hits.push({ file: p.file, line: p.line, snippet: p.snippet, source: "lsp", score: 0.95 });
-			} catch {}
+	const re = new RegExp(`\\b${escapeRegex(needle.split(".")[0] ?? needle)}\\b`);
+	await walkFiles(dir, 0, (name) => CODE_RE.test(name), async (file) => {
+		const content = await readFile(file, "utf8");
+		const lines = content.split("\n");
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i] ?? "";
+			if (!re.test(line)) continue;
+			const context = lines.slice(Math.max(0, i - 1), Math.min(lines.length, i + 2)).map((l) => l.trim());
+			const isDecl = /^(?:export\s+)?(?:async\s+)?(?:function|class|const|let|var|interface|type|enum|pub\s+fn|pub\s+struct|pub\s+use|def|struct|fn|impl|use)\b/.test(line.trim()) ||
+				/^(?:export\s+)?(?:default\s+)?(?:function|class|const)\s+\w*/.test(line.trim()) ||
+				/(?:^|\W)(?:import|export)\s+[^(\n]*\b/.test(line) && line.trim().startsWith("import");
+			hits.push({ file, line: i + 1, snippet: line.trim(), source: "lsp", score: isDecl ? 1.0 : 0.9, ...(context.length ? { context } : {}) });
 		}
-	}
+	});
 	return hits;
 }
 
@@ -148,19 +206,41 @@ export async function searchRoutes(dir: string, mode: string, limit = 25): Promi
 	return hits.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
+// ── persistence (untruncated run artifacts) ──────────────────────────────
+function persistArtifacts(pairs: { channel: string; hits: TrioHit[] }[]): AuditArtifacts | null {
+	try {
+		const base = resolve("runs");
+		mkdirSync(base, { recursive: true });
+		const dir = join(base, `audit-${Date.now()}`);
+		mkdirSync(dir, { recursive: true });
+		const files: AuditArtifacts["files"] = [];
+		for (const { channel, hits } of pairs) {
+			const path = join(dir, `${channel.toLowerCase()}.json`);
+			writeFileSync(path, JSON.stringify({ count: hits.length, hits }, null, 2));
+			files.push({ channel, path, count: hits.length });
+		}
+		return { dir, files };
+	} catch {
+		return null;
+	}
+}
+
 export async function executeReadTrioAudit(
 	query: string,
 	targetDir = ".",
 	limit = 20,
-): Promise<{ hits: FusedTrioHit[]; stats: { ast: number; bm25: number; lsp: number; route: number; elapsedMs: number }; routes: FusedTrioHit[] }> {
+): Promise<{ hits: FusedTrioHit[]; stats: { ast: number; bm25: number; lsp: number; route: number; astParseIssues: number; elapsedMs: number }; routes: FusedTrioHit[]; symbol: string | null; artifacts: AuditArtifacts | null }> {
 	const t0 = performance.now();
 	const absDir = resolve(targetDir);
-	const [astHits, bm25Hits, lspHits, routeHits] = await Promise.all([
-		searchAst(absDir, query),
+	const symbol = primarySymbol(query) ?? null;
+	const astNeedle = symbol ?? query.trim();
+	const [astRes, bm25Hits, lspHits, routeHits] = await Promise.all([
+		searchAst(absDir, astNeedle),
 		searchBm25(absDir, query),
-		searchLsp(absDir, query),
+		searchLsp(absDir, astNeedle),
 		searchRoutes(absDir, query),
 	]);
+	const astHits = astRes.hits;
 	const K = 60;
 	const map = new Map<string, { hit: TrioHit; rrf: number; channels: Set<string> }>();
 	function addRanked(list: TrioHit[], channel: string) {
@@ -185,9 +265,17 @@ export async function executeReadTrioAudit(
 		.sort((a, b) => b.rrf - a.rrf)
 		.slice(0, limit)
 		.map((e) => ({ file: e.hit.file, line: e.hit.line, snippet: e.hit.snippet, rrfScore: Number(e.rrf.toFixed(4)), channels: [...e.channels] }));
+	const artifacts = persistArtifacts([
+		{ channel: "AST", hits: astHits },
+		{ channel: "LSP", hits: lspHits },
+		{ channel: "BM25", hits: bm25Hits },
+		{ channel: "ROUTE", hits: routeHits },
+	]);
 	return {
 		hits,
 		routes: routeHits.map((r) => ({ file: r.file, line: r.line, snippet: r.snippet, rrfScore: Number(r.score.toFixed(4)), channels: ["ROUTE"] })),
-		stats: { ast: astHits.length, bm25: bm25Hits.length, lsp: lspHits.length, route: routeHits.length, elapsedMs: Number((performance.now() - t0).toFixed(1)) },
+		stats: { ast: astHits.length, bm25: bm25Hits.length, lsp: lspHits.length, route: routeHits.length, astParseIssues: astRes.parseIssues, elapsedMs: Number((performance.now() - t0).toFixed(1)) },
+		symbol,
+		artifacts,
 	};
 }
