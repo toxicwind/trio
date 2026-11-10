@@ -1,0 +1,39 @@
+{
+  "count": 3,
+  "hits": [
+    {
+      "file": "/tmp/trio-audit-nTvFP5/app.ts",
+      "line": 1,
+      "snippet": "import { startBunStdinPump } from \"./engine\";",
+      "source": "lsp",
+      "score": 1,
+      "context": [
+        "import { startBunStdinPump } from \"./engine\";",
+        "const pump = startBunStdinPump(() => {}); // reference use-site"
+      ]
+    },
+    {
+      "file": "/tmp/trio-audit-nTvFP5/app.ts",
+      "line": 2,
+      "snippet": "const pump = startBunStdinPump(() => {}); // reference use-site",
+      "source": "lsp",
+      "score": 1,
+      "context": [
+        "import { startBunStdinPump } from \"./engine\";",
+        "const pump = startBunStdinPump(() => {}); // reference use-site",
+        "export { pump };"
+      ]
+    },
+    {
+      "file": "/tmp/trio-audit-nTvFP5/engine.ts",
+      "line": 1,
+      "snippet": "export function startBunStdinPump(onChunk: (c: Buffer) => void) {",
+      "source": "lsp",
+      "score": 1,
+      "context": [
+        "export function startBunStdinPump(onChunk: (c: Buffer) => void) {",
+        "return { stop() {} };"
+      ]
+    }
+  ]
+}
