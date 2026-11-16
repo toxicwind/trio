@@ -29,7 +29,7 @@
 ## Deprecation cleanup (TDD)
 
 - [x] Inventory deprecated artifacts — geode `ssot/ports.env` (self-declared,
-      zero consumers, canonical estate/config/ports.env carries all ports);
+      zero consumers, canonical Pens/config/ports.env carries all ports);
       tau `legacy-bundled-resolver.ts` (test-only indirection); r/o SSE +
       legacy-* shims are live wiring, kept.
 - [x] TDD replacement coverage pass/fail BEFORE each deletion — deprecation

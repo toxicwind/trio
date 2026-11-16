@@ -12,7 +12,7 @@ import { semanticRerank } from "../src/audit.ts";
 // Any dropped invariant with a real-lane embed is a FINDING to chase.
 // ─────────────────────────────────────────────────────────────────────────
 
-const UA = "tau/18.8.4+estate-scripts.tau.f6baf040";
+const UA = "tau/18.8.4+Pens-scripts.tau.f6baf040";
 const BASE = "https://freeinference.org/v1";
 
 function mulberry32(seed: number): () => number {

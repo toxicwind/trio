@@ -21,6 +21,16 @@ export interface Variant {
 	source: string;
 }
 
+/**
+ * LCS DP cell cap. The DP allocates `(n+1)*(m+1)` u32 cells; for huge paired
+ * files (multi-MB logs/sessions) that can be hundreds of MB per pair and hang
+ * or OOM the process. When the middle band exceeds this cell budget we skip the
+ * DP and report the prefix/suffix-only overlap as the semantic ratio — a cheap,
+ * safe lower bound that still detects identical files (ratio 1) and gross
+ * divergence, without the quadratic blow-up.
+ */
+const MAX_LCS_CELLS = 4_000_000;
+
 export interface ChangedLine {
 	kind: "import-alias" | "type-annotation" | "modified" | "removed" | "added";
 	a?: string;
@@ -164,6 +174,9 @@ export function semanticRatio(a: string, b: string): number {
 	const midB = B.slice(pre, B.length - suf);
 	const lcsCommon = pre + suf;
 	if (midA.length === 0 || midB.length === 0) return (2 * lcsCommon) / denom;
+	// Scale guard: the DP is O(n*m) cells. For huge files (multi-MB logs) that
+	// blows up; fall back to the cheap prefix/suffix overlap as a lower bound.
+	if ((midA.length + 1) * (midB.length + 1) > MAX_LCS_CELLS) return (2 * lcsCommon) / denom;
 	// hash lines to u32 once (O(n+m)) — DP then compares ints, not strings
 	const hashLine = (s: string): number => {
 		let h = 0x811c9dc5;
@@ -229,6 +242,15 @@ export function comparePair(a: Variant, b: Variant): PairMetric {
 	if (n === 0 || m === 0) {
 		for (const l of midOA) changedLines.push({ kind: "removed", a: l });
 		for (const l of midOB) changedLines.push({ kind: "added", b: l });
+	} else if ((n + 1) * (m + 1) > MAX_LCS_CELLS) {
+		// Scale guard: skip the O(n*m) DP for huge paired files (multi-MB logs).
+		// Report the whole middle band as removed/added (capped) so the rollup
+		// still reflects divergence without allocating hundreds of MB.
+		const cap = 200;
+		for (const l of midOA.slice(0, cap)) changedLines.push({ kind: "removed", a: l });
+		for (const l of midOB.slice(0, cap)) changedLines.push({ kind: "added", b: l });
+		if (n > cap) changedLines.push({ kind: "removed", a: `… ${n - cap} more lines` });
+		if (m > cap) changedLines.push({ kind: "added", b: `… ${m - cap} more lines` });
 	} else {
 		const dp = new Uint32Array((n + 1) * (m + 1));
 		const base0 = n * (m + 1);

@@ -2,7 +2,7 @@
  * trio audit engine — federated parallel AST + BM25 + LSP + ROUTE code
  * intelligence, consolidated from the retired `@geode/triphylite` product
  * (2026-10-31). Same RRF fusion, widened to Rust/Go/Python/TS source so it
- * route-traces estate routers (rhodochrosite proxy is Rust).
+ * route-traces Pens routers (rhodochrosite proxy is Rust).
  */
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -216,7 +216,7 @@ export async function searchRoutes(dir: string, mode: string, limit = 25): Promi
  * "429 concurrency_limit_exceeded" ranks above "maxInFlightRequests" docs for
  * a query about capping concurrent upstream requests.
  *
- * Experimentally validated 2026-11-02 (estate `trio` E1): query-rerank places
+ * Experimentally validated 2026-11-02 (Pens `trio` E1): query-rerank places
  * the 429-capped provider line at sim=0.638 vs the settings-doc at 0.520.
  * Fails open: any embed failure returns `[]` and drops the channel.
  */

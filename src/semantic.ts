@@ -1,6 +1,6 @@
 /**
  * Semantic — cross-corpus overlap + query-relevance rerank via freeinference
- * bge-m3 embeddings (free, unlimited, ~99.9% — estate doctrine: embed
+ * bge-m3 embeddings (free, unlimited, ~99.9% — Pens doctrine: embed
  * everything, never skip).
  *
  * Primitive surface reused by both trio's semantic-overlap tool and the

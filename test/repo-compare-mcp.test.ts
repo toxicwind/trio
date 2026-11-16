@@ -141,7 +141,7 @@ describe("repo-compare MCP server", () => {
   });
 
   // Live-github test, guarded by the box's GH credential health: the whole
-  // estate's tokens (gh hosts.yml + secretsmith keyring) were invalid on
+  // Pens's tokens (gh hosts.yml + secretsmith keyring) were invalid on
   // 2026-10-31 (gh auth status rc!=0) and anonymous git cloning is
   // intermittently 401'd by GitHub — no product code can fix a revoked
   // account token. When creds are healthy this runs for real.

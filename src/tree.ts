@@ -13,14 +13,19 @@ const MAX_DEPTH = 6;
  * Walk a directory collecting text files as {path, source}. Bounded:
  * skips VCS/build/vendor dirs, dotfiles (except .github), blobs >512KB,
  * and binary content (NUL byte in the first 1KB). Pure stdlib deps.
+ *
+ * `maxFiles` (default 20_000) hard-caps the number of collected files so a
+ * huge runtime tree (e.g. ~/.tau with 180K session/log files) cannot hang or
+ * OOM the walk. `maxDepth` bounds recursion (default MAX_DEPTH).
  */
-export function walkTree(root: string): TreeFileEntry[] {
+export function walkTree(root: string, maxFiles: number = 20_000, maxDepth: number = MAX_DEPTH): TreeFileEntry[] {
 	const out: TreeFileEntry[] = [];
 	const visit = (dir: string, rel: string, depth: number): void => {
-		if (depth > MAX_DEPTH) return;
+		if (depth > maxDepth || out.length >= maxFiles) return;
 		let entries: fs.Dirent[];
 		try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
 		for (const e of entries) {
+			if (out.length >= maxFiles) return;
 			if (e.name.startsWith(".") && e.name !== ".github") continue;
 			if (SKIP_DIRS.has(e.name)) continue;
 			const full = path.join(dir, e.name);

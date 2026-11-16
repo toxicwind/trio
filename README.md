@@ -47,7 +47,7 @@ Federated search combining **AST**, **BM25**, **LSP**, and **ROUTE** channels us
 - **Strict Route Tracing**: Strips guard-clause noise; isolates genuine URL, HTTP, IPC, and router dispatch tables across TypeScript, Python, Go, and Rust.
 
 ### 3. Persistent Bun Notebook Kernel
-The estate's standalone execution VM:
+The Pens's standalone execution VM:
 - Top-level `let`/`const`/`class`/`function` bindings persist across cell executions.
 - Top-level `await` supported natively.
 - Zero Jupyter or VS Code dependencies.
@@ -116,4 +116,4 @@ bindings; `status` reports cell/error counts and the session name.
 
 ## License
 
-Estate internal — all rights reserved.
+Pens internal — all rights reserved.

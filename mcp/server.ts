@@ -108,10 +108,10 @@ server.tool(
 // ─── trio_product_sim: bge-m3 product/README similarity ────────────────
 // Validated: PS1 sibling-product READMEs 0.459 vs 0.339 unrelated. Use with
 // README-ish prose (0.3-0.5 range — corpus-idiom baselines exist across the
-// estate, so compare RELATIVE similarity, not absolute).
+// Pens, so compare RELATIVE similarity, not absolute).
 server.tool(
   "trio_product_sim",
-  "Semantic similarity between product descriptions/READMEs (bge-m3). Find which product a description belongs to, detect overlapping products across pens, or locate a product's canonical home. Pass document pairs; cosine 0.5+ with sibling docs = likely same product family. NOTE: docs within one estate share idiom vocabulary — compare RELATIVE similarity, not absolute.",
+  "Semantic similarity between product descriptions/READMEs (bge-m3). Find which product a description belongs to, detect overlapping products across pens, or locate a product's canonical home. Pass document pairs; cosine 0.5+ with sibling docs = likely same product family. NOTE: docs within one Pens share idiom vocabulary — compare RELATIVE similarity, not absolute.",
   {
     products: z.array(z.object({
       id: z.string().describe("product/repo id"),
@@ -152,14 +152,16 @@ server.tool(
 // ─── rc_tree_compare: two dirs → rollup ────────────────────────────────
 server.tool(
   "rc_tree_compare",
-  "Compare two local directories line-by-line, paired by relative path. Returns a rollup (files/paired/only-a/only-b/identical + mean similarity) and per-file diffs.",
+  "Compare two local directories line-by-line, paired by relative path. Returns a rollup (files/paired/only-a/only-b/identical + mean similarity) and per-file diffs. Scale-guarded by maxFiles (walk cap) and maxDepth.",
   {
     a: z.string().describe("first directory"),
     b: z.string().describe("second directory"),
+    maxFiles: z.number().optional().default(20000).describe("max files to walk per tree (default 20000)"),
+    maxDepth: z.number().optional().default(6).describe("max directory depth to walk (default 6)"),
   },
-  async ({ a, b }) => {
+  async ({ a, b, maxFiles, maxDepth }) => {
     const t0 = Date.now()
-    const ra = await walkTree(a), rb = await walkTree(b)
+    const ra = await walkTree(a, maxFiles, maxDepth), rb = await walkTree(b, maxFiles, maxDepth)
     const report = compareTrees(ra, rb)
     return { content: [{ type: "text", text: JSON.stringify({ report, ms: Date.now() - t0 }, null, 2) }] }
   },

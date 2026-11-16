@@ -1,6 +1,4 @@
 import * as vm from "node:vm";
-import { Writable } from "node:stream";
-import { Console } from "node:console";
 import type { ParserPlugin } from "@babel/parser";
 
 let babelParser: typeof import("@babel/parser") | undefined;
@@ -46,7 +44,7 @@ function isExecutionBoundary(type: string): boolean {
 	);
 }
 
-/** Top-level `await`, top-level `return`, or `for await` forces the async wrapper. */
+/** Top-level `await`, top-level `return`, `for await`, or static `import` forces the async wrapper. */
 function containsAsyncWrapperSyntax(node: unknown): boolean {
 	if (!node || typeof node !== "object") return false;
 	if (Array.isArray(node)) return node.some(containsAsyncWrapperSyntax);
@@ -54,6 +52,7 @@ function containsAsyncWrapperSyntax(node: unknown): boolean {
 	const type = typeof record.type === "string" ? record.type : "";
 	if (type === "ReturnStatement" || type === "AwaitExpression") return true;
 	if (type === "ForOfStatement" && record.await === true) return true;
+	if (type === "ImportDeclaration") return true;
 	if (typeof type === "string" && isExecutionBoundary(type)) return false;
 	for (const key in record) {
 		if (key === "loc" || key === "extra" || key === "range") continue;
@@ -110,6 +109,27 @@ function globalizeTopLevelDeclarations(code: string, body: ReadonlyArray<Record<
 				end: node.end,
 				replacement: `this[${JSON.stringify(node.id.name)}] = (${segment});`,
 			});
+			continue;
+		}
+		if (type === "ImportDeclaration") {
+			const source = code.slice(node.source.start, node.source.end);
+			const statements: string[] = [];
+			for (const specifier of node.specifiers ?? []) {
+				const local = code.slice(specifier.local.start, specifier.local.end);
+				const name = JSON.stringify(local);
+				if (specifier.type === "ImportDefaultSpecifier") {
+					statements.push(`this[${name}] = (await import(${source})).default;`);
+				} else if (specifier.type === "ImportNamespaceSpecifier") {
+					statements.push(`this[${name}] = (await import(${source}));`);
+				} else if (specifier.type === "ImportSpecifier") {
+					const imported = code.slice(specifier.imported.start, specifier.imported.end);
+					statements.push(`this[${name}] = (await import(${source})).${imported};`);
+				}
+			}
+			if (statements.length === 0) {
+				statements.push(`await import(${source});`);
+			}
+			edits.push({ start: node.start, end: node.end, replacement: statements.join("\n") });
 		}
 	}
 
@@ -170,22 +190,51 @@ export class TrioKernel {
 	#cells = 0;
 	#failures = 0;
 	#buffer: string[] = [];
-	#console: Console;
+	#console: Record<string, (...args: unknown[]) => void>;
 
 	constructor(options: TrioKernelOptions = {}) {
 		this.name = options.name ?? "trio";
-		const sink = new Writable({
-			write: (chunk, _enc, callback) => {
-				this.#buffer.push(typeof chunk === "string" ? chunk : chunk.toString("utf8"));
-				callback();
-			},
-		});
-		this.#console = new Console({ stdout: sink, stderr: sink, colorMode: false });
+		this.#console = this.#capturedConsole();
 		this.#context = this.#freshContext();
 	}
 
+	/** Bun-native console sink that appends formatted output to the cell buffer. */
+	#capturedConsole(): Record<string, (...args: unknown[]) => void> {
+		const write = (parts: unknown[]) => this.#buffer.push(parts.map(p => (typeof p === "string" ? p : Bun.inspect(p))).join(" ") + "\n");
+		const noop = () => {};
+		return {
+			log: (...args) => write(args),
+			info: (...args) => write(args),
+			warn: (...args) => write(args),
+			error: (...args) => write(args),
+			debug: (...args) => write(args),
+			trace: (...args) => write(args),
+			dir: (obj) => write([obj]),
+			dirxml: (obj) => write([obj]),
+			table: (obj) => write([obj]),
+			assert: (...args) => {
+				if (!args[0]) write(args.slice(1));
+			},
+			group: noop,
+			groupCollapsed: noop,
+			groupEnd: noop,
+			count: noop,
+			countReset: noop,
+			time: noop,
+			timeEnd: noop,
+			timeLog: noop,
+			clear: noop,
+			profile: noop,
+			profileEnd: noop,
+			markTimeline: noop,
+			timeline: noop,
+			timelineEnd: noop,
+		};
+	}
+
 	#freshContext(): vm.Context {
-		return vm.createContext({ console: this.#console, process });
+		const require = (import.meta as any).require;
+		return vm.createContext({ console: this.#console, process, Bun: globalThis.Bun, require });
 	}
 
 	async run(code: string): Promise<TrioRunResult> {
