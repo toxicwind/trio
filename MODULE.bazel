@@ -1,0 +1,2 @@
+module(name = "trio", version = "0.0.0")
+# # TODO: bazel_dep(name="aspect_rules_js") / rules_ts for BU chain
