@@ -1,0 +1,26 @@
+{
+  "count": 3,
+  "hits": [
+    {
+      "file": "/tmp/trio-audit-m1p96I/engine.ts",
+      "line": 0,
+      "snippet": "export function startBunStdinPump(onChunk: (c: Buffer) => void) {",
+      "source": "ast",
+      "score": 1
+    },
+    {
+      "file": "/tmp/trio-audit-m1p96I/app.ts",
+      "line": 0,
+      "snippet": "import { startBunStdinPump } from \"./engine\";",
+      "source": "ast",
+      "score": 1
+    },
+    {
+      "file": "/tmp/trio-audit-m1p96I/app.ts",
+      "line": 1,
+      "snippet": "const pump = startBunStdinPump(() => {}); // reference use-site",
+      "source": "ast",
+      "score": 1
+    }
+  ]
+}
